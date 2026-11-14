@@ -4,21 +4,10 @@ public class BidderBot implements Runnable {
     private String name;
     private Auction auction;
     private Random random = new Random();
-    private int minSleepMs = 100;
-    private int maxSleepMs = 500;
-    private boolean quiet = false;
 
     public BidderBot(String name, Auction auction) {
         this.name = name;
         this.auction = auction;
-    }
-
-    public BidderBot(String name, Auction auction, int minSleepMs, int maxSleepMs, boolean quiet) {
-        this.name = name;
-        this.auction = auction;
-        this.minSleepMs = minSleepMs;
-        this.maxSleepMs = maxSleepMs;
-        this.quiet = quiet;
     }
 
     public String getName() {
@@ -29,9 +18,8 @@ public class BidderBot implements Runnable {
     public void run() {
         while (auction.isOpen()) {
             try {
-                // Sleep for jitter delay
-                int sleepRange = Math.max(1, maxSleepMs - minSleepMs + 1);
-                int sleepTime = minSleepMs + random.nextInt(sleepRange);
+                // Sleep for random interval between 100ms and 500ms
+                int sleepTime = 100 + random.nextInt(401);
                 Thread.sleep(sleepTime);
 
                 if (!auction.isOpen()) {
@@ -45,9 +33,7 @@ public class BidderBot implements Runnable {
 
                 try {
                     auction.placeBid(name, bidAmount);
-                    if (!quiet) {
-                        System.out.println("[Bot] " + name + " placed bid: " + bidAmount);
-                    }
+                    System.out.println("[Bot] " + name + " placed bid: " + bidAmount);
                 } catch (InvalidBidException e) {
                     // Ignored: another bot may have placed a higher bid first
                 }
