@@ -1,5 +1,6 @@
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class Main {
@@ -353,6 +354,36 @@ public class Main {
             for (int i = 0; i < auction.getHistory().size(); i++) {
                 System.out.println("  " + (i + 1) + ". " + auction.getHistory().get(i));
             }
+            printMostActiveBidderReport(auction.getHistory());
+        }
+    }
+
+    private static void printMostActiveBidderReport(ArrayList<Bid> history) {
+        if (history.isEmpty()) {
+            return;
+        }
+
+        // Using HashMap<String, Integer> to count bids per bidder
+        HashMap<String, Integer> bidCounts = new HashMap<>();
+        for (Bid bid : history) {
+            String bidder = bid.getBidder();
+            bidCounts.put(bidder, bidCounts.getOrDefault(bidder, 0) + 1);
+        }
+
+        String mostActiveBidder = null;
+        int maxBids = 0;
+        for (HashMap.Entry<String, Integer> entry : bidCounts.entrySet()) {
+            if (entry.getValue() > maxBids) {
+                maxBids = entry.getValue();
+                mostActiveBidder = entry.getKey();
+            }
+        }
+
+        System.out.println("\n--- Bidder Activity Report (HashMap) ---");
+        System.out.println("Most Active Bidder: " + mostActiveBidder + " (" + maxBids + " bids)");
+        System.out.println("Breakdown by Bidder:");
+        for (HashMap.Entry<String, Integer> entry : bidCounts.entrySet()) {
+            System.out.println("  - " + entry.getKey() + ": " + entry.getValue() + " bid(s)");
         }
     }
 
