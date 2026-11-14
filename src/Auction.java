@@ -24,11 +24,22 @@ public class Auction {
     }
 
     public synchronized void close() {
+        if (!open) {
+            return;
+        }
         open = false;
         if (highestBid != null) {
             item.setWinner(highestBid.getBidder());
             item.setFinalPrice(highestBid.getAmount());
         }
+        notifyAll();
+    }
+
+    public synchronized Bid waitForResult() throws InterruptedException {
+        while (open) {
+            wait();
+        }
+        return highestBid;
     }
 
     public synchronized boolean isOpen() {
