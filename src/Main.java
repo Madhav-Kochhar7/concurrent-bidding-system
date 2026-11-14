@@ -15,6 +15,8 @@ public class Main {
             System.out.println("\n--- Main Menu ---");
             System.out.println("1. Create an item and start manual auction");
             System.out.println("2. Run auction on an item (with 5 bots)");
+            System.out.println("3. Show all items and results");
+            System.out.println("4. Show bid history of an item");
             System.out.println("0. Exit");
             System.out.print("Enter your choice: ");
 
@@ -26,12 +28,18 @@ public class Main {
                 case "2":
                     runBotAuction();
                     break;
+                case "3":
+                    showAllItemsFromDB();
+                    break;
+                case "4":
+                    showBidHistoryFromDB();
+                    break;
                 case "0":
                     running = false;
                     System.out.println("Exiting. Goodbye!");
                     break;
                 default:
-                    System.out.println("Invalid option. Please enter 1, 2, or 0.");
+                    System.out.println("Invalid option. Please enter 1, 2, 3, 4, or 0.");
             }
         }
     }
@@ -135,6 +143,57 @@ public class Main {
             saveAuctionResultsToDatabase(auction);
         } catch (InterruptedException e) {
             System.out.println("Auction was interrupted: " + e.getMessage());
+        }
+    }
+
+    private static void showAllItemsFromDB() {
+        System.out.println("\n--- All Items and Results (from Database) ---");
+        try {
+            ArrayList<Item> items = DBHelper.getAllItems();
+            if (items.isEmpty()) {
+                System.out.println("No items found in database.");
+                return;
+            }
+            System.out.printf("%-5s %-20s %-12s %-15s %-15s %-12s%n",
+                "ID", "Name", "Start Price", "Min Increment", "Winner", "Final Price");
+            System.out.println("----------------------------------------------------------------------------------");
+            for (Item item : items) {
+                String winner = (item.getWinner() != null) ? item.getWinner() : "(No winner / Unsold)";
+                String finalPrice = (item.getFinalPrice() > 0) ? String.valueOf(item.getFinalPrice()) : "N/A";
+                System.out.printf("%-5d %-20s %-12d %-15d %-15s %-12s%n",
+                    item.getId(),
+                    item.getName(),
+                    item.getStartPrice(),
+                    item.getMinIncrement(),
+                    winner,
+                    finalPrice);
+            }
+        } catch (SQLException e) {
+            System.out.println("[DB Error] Could not retrieve items: " + e.getMessage());
+        }
+    }
+
+    private static void showBidHistoryFromDB() {
+        System.out.println("\n--- Show Bid History (from Database) ---");
+        int itemId = readPositiveInt("Enter item ID: ");
+        try {
+            Item item = DBHelper.getItemById(itemId);
+            if (item == null) {
+                System.out.println("No item found with ID " + itemId + " in database.");
+                return;
+            }
+            System.out.println("Item: " + item.getName() + " (Start: " + item.getStartPrice() + ", Min Increment: " + item.getMinIncrement() + ")");
+            ArrayList<String> history = DBHelper.getBidHistory(itemId);
+            if (history.isEmpty()) {
+                System.out.println("No bids recorded for this item.");
+            } else {
+                System.out.println("Bid History (" + history.size() + " bids):");
+                for (String record : history) {
+                    System.out.println("  " + record);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("[DB Error] Could not retrieve bid history: " + e.getMessage());
         }
     }
 

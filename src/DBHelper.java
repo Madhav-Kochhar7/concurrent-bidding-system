@@ -92,4 +92,45 @@ public class DBHelper {
         }
         return list;
     }
+
+    public static Item getItemById(int itemId) throws SQLException {
+        String sql = "SELECT item_id, name, start_price, min_increment, winner, final_price FROM items WHERE item_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Item item = new Item(
+                        rs.getInt("item_id"),
+                        rs.getString("name"),
+                        rs.getInt("start_price"),
+                        rs.getInt("min_increment")
+                    );
+                    item.setWinner(rs.getString("winner"));
+                    item.setFinalPrice(rs.getInt("final_price"));
+                    return item;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static ArrayList<String> getBidHistory(int itemId) throws SQLException {
+        ArrayList<String> list = new ArrayList<>();
+        String sql = "SELECT bid_id, bidder_name, amount, placed_at FROM bids WHERE item_id = ? ORDER BY bid_id";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int bidId = rs.getInt("bid_id");
+                    String bidder = rs.getString("bidder_name");
+                    int amount = rs.getInt("amount");
+                    String placedAt = rs.getString("placed_at");
+                    list.add("#" + bidId + " | " + bidder + " bid " + amount + " (at " + placedAt + ")");
+                }
+            }
+        }
+        return list;
+    }
 }
