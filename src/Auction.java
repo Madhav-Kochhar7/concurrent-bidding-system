@@ -76,7 +76,9 @@ public class Auction {
         notifyAll();
     }
 
+    // Thread coordination: waits until the auction closes
     public synchronized Bid waitForResult() throws InterruptedException {
+        // Use 'while' instead of 'if' to protect against spurious wakeups
         while (open) {
             wait();
         }
