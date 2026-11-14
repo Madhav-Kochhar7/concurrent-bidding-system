@@ -10,7 +10,7 @@ Welcome team! This document explains our project in simple terms so everyone on 
 - **No Heavy Frameworks**: No Spring, No Maven, No Gradle. Just pure, foundational Java.
 - **Core Features**:
   1. **Manual Bidding**: Users can create an item and type bids in real time.
-  2. **Multi-threaded Bot Auction**: 5 automated bots (`BidderBot` threads) place concurrent bids simultaneously while an `AuctionTimer` thread counts down 10 seconds.
+  2. **Multi-threaded Bot Auction**: 2 automated bots (`Bot-1` and `Bot-2` threads) place concurrent bids simultaneously while an `AuctionTimer` thread counts down 5 seconds.
   3. **Thread Safety**: Uses Java's `synchronized` keyword so two bots can never corrupt the highest bid at the same millisecond.
   4. **Database Persistence**: Every item, bid, and final winner is stored in MySQL using JDBC `PreparedStatement`.
   5. **Analytics Report**: Uses a `HashMap` to find which bidder was the most active.
@@ -25,17 +25,15 @@ Welcome team! This document explains our project in simple terms so everyone on 
                        +---------+---------+
                                  |
         +------------------------+------------------------+
-        | Starts 5 Bots                                   | Starts 1 Timer
+        | Starts 2 Bots                                   | Starts 1 Timer
         v                                                 v
 +---------------+                                 +---------------+
 |  BidderBot 1  |                                 |  AuctionTimer |
-|  BidderBot 2  |                                 |   (10 secs)   |
-|  BidderBot 3  |                                 +-------+-------+
-|  BidderBot 4  |                                         |
-|  BidderBot 5  |                                         | Sleeps 10s, then
-+-------+-------+                                         | calls auction.close()
+|  BidderBot 2  |                                 |   (5 secs)    |
++-------+-------+                                 +-------+-------+
         |                                                 |
-        | Calls synchronized placeBid()                   |
+        |                                                 | Sleeps 5s, then
+        | Calls synchronized placeBid()                   | calls auction.close()
         v                                                 v
 +-----------------------------------------------------------------+
 |                         Auction Object                          |
@@ -56,10 +54,10 @@ Welcome team! This document explains our project in simple terms so everyone on 
 
 1. You start the auction (e.g. Gaming Laptop, starting price 500, min increment 50).
 2. The item is saved to MySQL, and an `item_id` is generated.
-3. 5 `BidderBot` threads start running concurrently.
-4. Each bot sleeps for a random time (100–500 ms), reads the current required minimum bid, and calls `auction.placeBid()`.
+3. 2 `BidderBot` threads start running concurrently.
+4. Each bot sleeps for a random time (600–1100 ms), reads the current required minimum bid, and calls `auction.placeBid()`.
 5. Because `placeBid()` is `synchronized`, Java only lets **one bot inside the method at a time**.
-6. The `AuctionTimer` thread sleeps for 10 seconds, then calls `auction.close()`.
+6. The `AuctionTimer` thread sleeps for 5 seconds, then calls `auction.close()`.
 7. `close()` wakes up the main thread (`notifyAll()`), prints the winner, and saves all bids to MySQL in batch.
 
 ---

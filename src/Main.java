@@ -15,7 +15,7 @@ public class Main {
         while (running) {
             System.out.println("\n--- Main Menu ---");
             System.out.println("1. Create an item and start manual auction");
-            System.out.println("2. Run auction on an item (with 5 bots)");
+            System.out.println("2. Run auction on an item (with 2 bots, 5s)");
             System.out.println("3. Show all items and results");
             System.out.println("4. Show bid history of an item");
             System.out.println("0. Exit");
@@ -113,16 +113,16 @@ public class Main {
 
         Auction auction = new Auction(item);
 
-        System.out.println("\nStarting auction for 10 seconds with 5 bots...");
+        System.out.println("\nStarting auction for 5 seconds with 2 bots (Bot-1 and Bot-2)...");
         System.out.println("Item: " + item.getName() + " (Start: " + item.getStartPrice() + ", Min Increment: " + item.getMinIncrement() + ")");
 
         ArrayList<Thread> botThreads = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 2; i++) {
             Thread bot = new Thread(new BidderBot("Bot-" + i, auction));
             botThreads.add(bot);
         }
 
-        Thread timerThread = new Thread(new AuctionTimer(auction, 10));
+        Thread timerThread = new Thread(new AuctionTimer(auction, 5));
 
         // Start all threads
         for (Thread bot : botThreads) {

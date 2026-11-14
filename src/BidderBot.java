@@ -18,8 +18,8 @@ public class BidderBot implements Runnable {
     public void run() {
         while (auction.isOpen()) {
             try {
-                // Sleep for random interval between 100ms and 500ms
-                int sleepTime = 100 + random.nextInt(401);
+                // Sleep for random interval between 600ms and 1100ms (paced bidding)
+                int sleepTime = 600 + random.nextInt(501);
                 Thread.sleep(sleepTime);
 
                 if (!auction.isOpen()) {

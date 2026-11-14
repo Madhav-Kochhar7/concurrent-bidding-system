@@ -103,7 +103,7 @@ java -cp "lib/*;src" Main
 
 --- Main Menu ---
 1. Create an item and start manual auction
-2. Run auction on an item (with 5 bots)
+2. Run auction on an item (with 2 bots, 5s)
 3. Show all items and results
 4. Show bid history of an item
 0. Exit
@@ -115,29 +115,34 @@ java -cp "lib/*;src" Main
 
 ### Option 2: Bot Auction with Most Active Bidder Report
 ```
-Starting auction for 10 seconds with 5 bots...
-Item: Gaming Laptop (Start: 500, Min Increment: 50)
-[Bot] Bot-2 placed bid: 592
-[Bot] Bot-4 placed bid: 682
-...
-[Timer] Time's up (10s)! Closing auction...
+Starting auction for 5 seconds with 2 bots (Bot-1 and Bot-2)...
+Item: Smart Watch (Start: 200, Min Increment: 25)
+[Bot] Bot-2 placed bid: 201
+[Bot] Bot-1 placed bid: 257
+[Bot] Bot-1 placed bid: 311
+[Bot] Bot-2 placed bid: 348
+[Bot] Bot-1 placed bid: 404
+[Bot] Bot-2 placed bid: 476
+[Bot] Bot-1 placed bid: 549
+[Bot] Bot-2 placed bid: 605
+[Bot] Bot-1 placed bid: 668
+[Bot] Bot-2 placed bid: 701
+
+[Timer] Time's up (5s)! Closing auction...
 
 =================================
          AUCTION CLOSED          
 =================================
-Item        : Gaming Laptop
-Winner      : Bot-1
-Final Price : 16870
-Total bids placed: 163
+Item        : Smart Watch
+Winner      : Bot-2
+Final Price : 701
+Total bids placed: 10
 
 --- Bidder Activity Report (HashMap) ---
-Most Active Bidder: Bot-1 (36 bids)
+Most Active Bidder: Bot-2 (5 bids)
 Breakdown by Bidder:
-  - Bot-1: 36 bid(s)
-  - Bot-2: 32 bid(s)
-  - Bot-3: 33 bid(s)
-  - Bot-4: 31 bid(s)
-  - Bot-5: 31 bid(s)
+  - Bot-2: 5 bid(s)
+  - Bot-1: 5 bid(s)
 ```
 
 ---
