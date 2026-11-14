@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
@@ -12,6 +13,7 @@ public class Main {
         while (running) {
             System.out.println("\n--- Main Menu ---");
             System.out.println("1. Create an item and start manual auction");
+            System.out.println("2. Run auction on an item (with 5 bots)");
             System.out.println("0. Exit");
             System.out.print("Enter your choice: ");
 
@@ -20,12 +22,15 @@ public class Main {
                 case "1":
                     runManualAuction();
                     break;
+                case "2":
+                    runBotAuction();
+                    break;
                 case "0":
                     running = false;
                     System.out.println("Exiting. Goodbye!");
                     break;
                 default:
-                    System.out.println("Invalid option. Please enter 1 or 0.");
+                    System.out.println("Invalid option. Please enter 1, 2, or 0.");
             }
         }
     }
@@ -75,6 +80,58 @@ public class Main {
             }
         }
 
+        printAuctionSummary(auction);
+    }
+
+    private static void runBotAuction() {
+        System.out.println("\n--- Add Item for Bot Auction ---");
+        System.out.print("Enter item name: ");
+        String name = scanner.nextLine().trim();
+        while (name.isEmpty()) {
+            System.out.print("Name cannot be empty. Enter item name: ");
+            name = scanner.nextLine().trim();
+        }
+
+        int startPrice = readPositiveInt("Enter starting price: ");
+        int minIncrement = readPositiveInt("Enter minimum increment: ");
+
+        Item item = new Item(name, startPrice, minIncrement);
+        Auction auction = new Auction(item);
+
+        System.out.println("\nStarting auction for 10 seconds with 5 bots...");
+        System.out.println("Item: " + item.getName() + " (Start: " + item.getStartPrice() + ", Min Increment: " + item.getMinIncrement() + ")");
+
+        ArrayList<Thread> botThreads = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            Thread bot = new Thread(new BidderBot("Bot-" + i, auction));
+            botThreads.add(bot);
+        }
+
+        Thread timerThread = new Thread(new AuctionTimer(auction, 10));
+
+        // Start all threads
+        for (Thread bot : botThreads) {
+            bot.start();
+        }
+        timerThread.start();
+
+        // Main thread waits for the auction to finish
+        try {
+            auction.waitForResult();
+
+            // Wait for timer and bots to finish
+            timerThread.join();
+            for (Thread bot : botThreads) {
+                bot.join();
+            }
+
+            printAuctionSummary(auction);
+        } catch (InterruptedException e) {
+            System.out.println("Auction was interrupted: " + e.getMessage());
+        }
+    }
+
+    private static void printAuctionSummary(Auction auction) {
         System.out.println("\n=================================");
         System.out.println("         AUCTION CLOSED          ");
         System.out.println("=================================");
