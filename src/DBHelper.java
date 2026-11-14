@@ -36,6 +36,42 @@ public class DBHelper {
         return -1;
     }
 
+    public static void saveBid(int itemId, Bid bid) throws SQLException {
+        String sql = "INSERT INTO bids (item_id, bidder_name, amount) VALUES (?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, itemId);
+            stmt.setString(2, bid.getBidder());
+            stmt.setInt(3, bid.getAmount());
+            stmt.executeUpdate();
+        }
+    }
+
+    public static void saveBids(int itemId, ArrayList<Bid> bids) throws SQLException {
+        String sql = "INSERT INTO bids (item_id, bidder_name, amount) VALUES (?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            for (Bid bid : bids) {
+                stmt.setInt(1, itemId);
+                stmt.setString(2, bid.getBidder());
+                stmt.setInt(3, bid.getAmount());
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+        }
+    }
+
+    public static void saveResult(int itemId, String winner, int finalPrice) throws SQLException {
+        String sql = "UPDATE items SET winner = ?, final_price = ? WHERE item_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, winner);
+            stmt.setInt(2, finalPrice);
+            stmt.setInt(3, itemId);
+            stmt.executeUpdate();
+        }
+    }
+
     public static ArrayList<Item> getAllItems() throws SQLException {
         ArrayList<Item> list = new ArrayList<>();
         String sql = "SELECT item_id, name, start_price, min_increment, winner, final_price FROM items ORDER BY item_id";

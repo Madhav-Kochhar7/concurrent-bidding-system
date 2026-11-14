@@ -1,3 +1,4 @@
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -48,6 +49,8 @@ public class Main {
         int minIncrement = readPositiveInt("Enter minimum increment: ");
 
         Item item = new Item(name, startPrice, minIncrement);
+        saveItemToDatabase(item);
+
         Auction auction = new Auction(item);
 
         System.out.println("\nAuction started for: " + item.getName());
@@ -81,6 +84,7 @@ public class Main {
         }
 
         printAuctionSummary(auction);
+        saveAuctionResultsToDatabase(auction);
     }
 
     private static void runBotAuction() {
@@ -96,6 +100,8 @@ public class Main {
         int minIncrement = readPositiveInt("Enter minimum increment: ");
 
         Item item = new Item(name, startPrice, minIncrement);
+        saveItemToDatabase(item);
+
         Auction auction = new Auction(item);
 
         System.out.println("\nStarting auction for 10 seconds with 5 bots...");
@@ -126,8 +132,33 @@ public class Main {
             }
 
             printAuctionSummary(auction);
+            saveAuctionResultsToDatabase(auction);
         } catch (InterruptedException e) {
             System.out.println("Auction was interrupted: " + e.getMessage());
+        }
+    }
+
+    private static void saveItemToDatabase(Item item) {
+        try {
+            int id = DBHelper.saveItem(item);
+            if (id > 0) {
+                System.out.println("[DB] Item saved to database with ID: " + id);
+            }
+        } catch (SQLException e) {
+            System.out.println("[DB Notice] Could not save item to MySQL: " + e.getMessage());
+        }
+    }
+
+    private static void saveAuctionResultsToDatabase(Auction auction) {
+        Item item = auction.getItem();
+        if (item.getId() > 0) {
+            try {
+                DBHelper.saveBids(item.getId(), auction.getHistory());
+                DBHelper.saveResult(item.getId(), item.getWinner(), item.getFinalPrice());
+                System.out.println("[DB] Auction result and " + auction.getHistory().size() + " bids saved to database.");
+            } catch (SQLException e) {
+                System.out.println("[DB Notice] Could not save bids/result to MySQL: " + e.getMessage());
+            }
         }
     }
 
