@@ -17,6 +17,7 @@ public class Main {
             System.out.println("2. Run auction on an item (with 5 bots)");
             System.out.println("3. Show all items and results");
             System.out.println("4. Show bid history of an item");
+            System.out.println("5. Race condition demo");
             System.out.println("0. Exit");
             System.out.print("Enter your choice: ");
 
@@ -34,12 +35,15 @@ public class Main {
                 case "4":
                     showBidHistoryFromDB();
                     break;
+                case "5":
+                    runRaceConditionDemo();
+                    break;
                 case "0":
                     running = false;
                     System.out.println("Exiting. Goodbye!");
                     break;
                 default:
-                    System.out.println("Invalid option. Please enter 1, 2, 3, 4, or 0.");
+                    System.out.println("Invalid option. Please enter 0 to 5.");
             }
         }
     }
@@ -143,6 +147,114 @@ public class Main {
             saveAuctionResultsToDatabase(auction);
         } catch (InterruptedException e) {
             System.out.println("Auction was interrupted: " + e.getMessage());
+        }
+    }
+
+    private static void runRaceConditionDemo() {
+        System.out.println("\n==================================================");
+        System.out.println("          RACE CONDITION DEMONSTRATION            ");
+        System.out.println("==================================================");
+        System.out.println("This demo proves why 'synchronized' is required when");
+        System.out.println("multiple threads place bids simultaneously.");
+
+        // Part 1: Unsafe execution (WITHOUT synchronization, 1ms delay)
+        System.out.println("\n>>> PART 1: Running with 'synchronized' REMOVED (Unsafe Mode) <<<");
+        System.out.println("Launching 10 concurrent bots for 2 seconds...");
+
+        Item unsafeItem = new Item("Unsafe Demo Item", 100, 10);
+        Auction unsafeAuction = new Auction(unsafeItem);
+        unsafeAuction.setUnsafeMode(true); // Disables synchronized & adds 1ms delay
+
+        ArrayList<Thread> unsafeBots = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            unsafeBots.add(new Thread(new BidderBot("Bot-" + i, unsafeAuction, 10, 40, true)));
+        }
+        Thread unsafeTimer = new Thread(new AuctionTimer(unsafeAuction, 2));
+
+        for (Thread bot : unsafeBots) {
+            bot.start();
+        }
+        unsafeTimer.start();
+
+        try {
+            unsafeAuction.waitForResult();
+            unsafeTimer.join();
+            for (Thread bot : unsafeBots) {
+                bot.join();
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Interrupted: " + e.getMessage());
+        }
+
+        // Validate history
+        ArrayList<Bid> unsafeHistory = unsafeAuction.getHistory();
+        System.out.println("Total bids recorded: " + unsafeHistory.size());
+
+        int violations = 0;
+        for (int i = 1; i < unsafeHistory.size(); i++) {
+            int prevAmount = unsafeHistory.get(i - 1).getAmount();
+            int currentAmount = unsafeHistory.get(i).getAmount();
+            if (currentAmount < prevAmount + unsafeItem.getMinIncrement()) {
+                violations++;
+                if (violations <= 5) {
+                    System.out.println("  [RACE VIOLATION] Bid #" + (i + 1) + " by " + unsafeHistory.get(i).getBidder()
+                        + " was " + currentAmount + " (should have been >= " + (prevAmount + unsafeItem.getMinIncrement())
+                        + " after previous bid of " + prevAmount + ")");
+                }
+            }
+        }
+
+        if (violations > 0) {
+            System.out.println(">>> RESULT: RACE CONDITION: invalid bids were accepted! (" + violations + " violations detected) <<<");
+        } else {
+            System.out.println("No race conditions observed in this run.");
+        }
+
+        // Part 2: Safe execution (WITH synchronization)
+        System.out.println("\n>>> PART 2: Running WITH 'synchronized' (Safe Mode) <<<");
+        System.out.println("Launching 10 concurrent bots for 2 seconds...");
+
+        Item safeItem = new Item("Safe Demo Item", 100, 10);
+        Auction safeAuction = new Auction(safeItem);
+        safeAuction.setUnsafeMode(false); // Default: fully synchronized
+
+        ArrayList<Thread> safeBots = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            safeBots.add(new Thread(new BidderBot("Bot-" + i, safeAuction, 10, 40, true)));
+        }
+        Thread safeTimer = new Thread(new AuctionTimer(safeAuction, 2));
+
+        for (Thread bot : safeBots) {
+            bot.start();
+        }
+        safeTimer.start();
+
+        try {
+            safeAuction.waitForResult();
+            safeTimer.join();
+            for (Thread bot : safeBots) {
+                bot.join();
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Interrupted: " + e.getMessage());
+        }
+
+        ArrayList<Bid> safeHistory = safeAuction.getHistory();
+        System.out.println("Total bids recorded: " + safeHistory.size());
+
+        int safeViolations = 0;
+        for (int i = 1; i < safeHistory.size(); i++) {
+            int prevAmount = safeHistory.get(i - 1).getAmount();
+            int currentAmount = safeHistory.get(i).getAmount();
+            if (currentAmount < prevAmount + safeItem.getMinIncrement()) {
+                safeViolations++;
+            }
+        }
+
+        if (safeViolations == 0) {
+            System.out.println(">>> RESULT: Safe version passed: all bids were valid and strictly increasing! <<<");
+        } else {
+            System.out.println("Unexpected violation in safe mode: " + safeViolations);
         }
     }
 

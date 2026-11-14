@@ -5,12 +5,30 @@ public class Auction {
     private Bid highestBid;
     private ArrayList<Bid> history = new ArrayList<>();
     private boolean open = true;
+    private boolean unsafeMode = false;
 
     public Auction(Item item) {
         this.item = item;
     }
 
-    public synchronized void placeBid(String bidder, int amount) throws InvalidBidException {
+    public void setUnsafeMode(boolean unsafeMode) {
+        this.unsafeMode = unsafeMode;
+    }
+
+    public boolean isUnsafeMode() {
+        return unsafeMode;
+    }
+
+    public void placeBid(String bidder, int amount) throws InvalidBidException {
+        if (unsafeMode) {
+            placeBidUnsafe(bidder, amount);
+        } else {
+            placeBidSafe(bidder, amount);
+        }
+    }
+
+    // Safe version: synchronized prevents multiple threads from interleaving
+    private synchronized void placeBidSafe(String bidder, int amount) throws InvalidBidException {
         if (!open) {
             throw new InvalidBidException("Auction is closed");
         }
@@ -19,6 +37,29 @@ public class Auction {
         if (amount < minimum) {
             throw new InvalidBidException("Bid must be at least " + minimum);
         }
+        highestBid = new Bid(bidder, amount);
+        history.add(highestBid);
+    }
+
+    // Unsafe version: WITHOUT synchronized and with an artificial 1ms delay
+    // between checking and saving, multiple threads will experience race conditions
+    private void placeBidUnsafe(String bidder, int amount) throws InvalidBidException {
+        if (!open) {
+            throw new InvalidBidException("Auction is closed");
+        }
+        int minimum = (highestBid == null) ? item.getStartPrice()
+                                           : highestBid.getAmount() + item.getMinIncrement();
+        if (amount < minimum) {
+            throw new InvalidBidException("Bid must be at least " + minimum);
+        }
+
+        try {
+            // Artificial delay between checking and saving
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         highestBid = new Bid(bidder, amount);
         history.add(highestBid);
     }
